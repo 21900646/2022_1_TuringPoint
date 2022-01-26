@@ -33,6 +33,7 @@ class GstPipeline:
         self.overlaysink = self.pipeline.get_by_name('overlaysink')
 
         #얘네는 이름 바꾸면 안됨. 그대로
+        #파이프라인에서 GStreamer 데이터를 처리하도록 하는 다양한 방법을 지원하는 싱크 플러그인. 대부분의 GStreamer 요소와 달리 Appsink는 외부 API 기능을 제공한다.
         appsink = self.pipeline.get_by_name('appsink')
         
         #connect 원하는 곳으로 해주기.
@@ -56,7 +57,7 @@ class GstPipeline:
         worker = threading.Thread(target=self.inference_loop) #thread 객체 얻기 (파생클래스 작성하기) #target은 함수, 하지만 () 이거 쓰면 결과가 리턴되기 때문에 하면 안된다. 
         worker.start() #subthread 돌리기
 
-        # Run pipeline. playing 시작
+        # Run pipeline. playing 시작!!!!
         # set_state 함수는 요청된 상태를 설정.
         self.pipeline.set_state(Gst.State.PLAYING)
         
@@ -74,6 +75,7 @@ class GstPipeline:
             pass
         
         # 상태 원상복구 해주기.
+        
         with self.condition:
             self.running = False
             self.condition.notify_all()
@@ -121,6 +123,7 @@ class GstPipeline:
                     self.sink_size[1] + box.get_property('top') + box.get_property('bottom'))
         return self.box
 
+    
     def inference_loop(self):
         while True:
             with self.condition:
@@ -337,6 +340,8 @@ def main():
                         default=os.path.join(default_model_dir,default_model))
     parser.add_argument('--labels', help='label file path',
                         default=os.path.join(default_model_dir, default_labels))
+    
+    # 보여줄 결과 
     parser.add_argument('--top_k', type=int, default=3,
                         help='number of categories with highest score to display')
     parser.add_argument('--threshold', type=float, default=0.1,
