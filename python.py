@@ -201,9 +201,12 @@ class GstPipeline:
         bus = self.pipeline.get_bus()
         bus.set_sync_handler(on_bus_message_sync, self.overlaysink)
 
+        
 def get_dev_board_model():
   try:
+    # model 읽어서 소문자로 만들기 -> 여기서 model이란 coral말하는 거.
     model = open('/sys/firmware/devicetree/base/model').read().lower()
+    
     if 'mx8mq' in model:
         return 'mx8mq'
     if 'mt8167' in model:
@@ -211,18 +214,27 @@ def get_dev_board_model():
   except: pass
   return None
 
+
 def run_pipeline(user_function,
                  src_size,
                  appsink_size,
                  videosrc='/dev/video1',
                  videofmt='raw',
                  headless=False):
+    
+    #videoformat이 h264라면 ~
     if videofmt == 'h264':
         SRC_CAPS = 'video/x-h264,width={width},height={height},framerate=30/1'
+        
+    #videoformat이 jpeg라면 ~
     elif videofmt == 'jpeg':
         SRC_CAPS = 'image/jpeg,width={width},height={height},framerate=30/1'
+        
+    #videoformat이 다른거라면 ~
     else:
         SRC_CAPS = 'video/x-raw,width={width},height={height},framerate=30/1'
+        
+    #비디오 주소가 이걸로 시작한다면 ~
     if videosrc.startswith('/dev/video'):
         PIPELINE = 'v4l2src device=%s ! {src_caps}'%videosrc
     elif videosrc.startswith('http'):
@@ -236,8 +248,12 @@ def run_pipeline(user_function,
                     ! videoconvert n-threads=4 ! videoscale n-threads=4
                     ! {src_caps} ! {leaky_q} """ % (videosrc, demux)
 
+        
+    # gstreamer.py의 함수 (coral 모델 뭔지 알아오는 거.)
     coral = get_dev_board_model()
-    if headless:
+    
+    
+    if headless: # pipeline 돌리면 false된다.
         scale = min(appsink_size[0] / src_size[0], appsink_size[1] / src_size[1])
         scale = tuple(int(x * scale) for x in src_size)
         scale_caps = 'video/x-raw,width={width},height={height}'.format(width=scale[0], height=scale[1])
@@ -283,6 +299,7 @@ def run_pipeline(user_function,
 
     print('Gstreamer pipeline:\n', pipeline)
 
+    #gstreamer.py의 class
     pipeline = GstPipeline(pipeline, user_function, src_size)
     pipeline.run()
     
@@ -359,6 +376,7 @@ def main():
       print(' '.join(text_lines))
       return generate_svg(src_size, text_lines)
 
+    #gstreamer.py에서 만든 함수 
     result = gstreamer.run_pipeline(user_callback,
                                     src_size=(640, 480),
                                     appsink_size=inference_size,
@@ -434,7 +452,6 @@ from pycoral.utils.edgetpu import make_interpreter
 from pycoral.utils.edgetpu import run_inference
 
 def generate_svg(src_size, inference_box, objs, labels, text_lines):
-    
     
     svg = SVG(src_size)
     src_w, src_h = src_size
