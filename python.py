@@ -10,6 +10,7 @@ from gi.repository import GLib, GObject, Gst, GstBase, Gtk
 Gst.init(None)
 
 class GstPipeline:
+    
     #init 함수는 대부분 이렇게 만듦
     def __init__(self, pipeline, user_function, src_size):
         self.user_function = user_function
@@ -36,12 +37,13 @@ class GstPipeline:
 
         # Set up a pipeline bus watch to catch errors.
         bus = self.pipeline.get_bus()
-        bus.add_signal_watch()
+        bus.add_signal_watch()  # 버스 신호 감시
         bus.connect('message', self.on_bus_message)
 
         # Set up a full screen window on Coral, no-op otherwise.
         self.setup_window()
 
+        
     def run(self):
         # Start inference worker.
         self.running = True  #돌렸다.
@@ -50,8 +52,10 @@ class GstPipeline:
         worker = threading.Thread(target=self.inference_loop) #thread 객체 얻기 (파생클래스 작성하기) #target은 함수, 하지만 () 이거 쓰면 결과가 리턴되기 때문에 하면 안된다. 
         worker.start() #subthread 돌리기
 
-        # Run pipeline.
+        # Run pipeline. playing 시작
+        # set_state 함수는 요청된 상태를 설정.
         self.pipeline.set_state(Gst.State.PLAYING)
+        
         try:
             Gtk.main()
         except:
@@ -59,13 +63,19 @@ class GstPipeline:
 
         # Clean up.
         self.pipeline.set_state(Gst.State.NULL)
+        
+        # 이건 뭐고 ???????????????????????????????????????????????????
+      
         while GLib.MainContext.default().iteration(False):
             pass
+        
+        # 상태 원상복구 해주기.
         with self.condition:
             self.running = False
             self.condition.notify_all()
         worker.join()
 
+    # 버스가 잡은 error 메세지    
     def on_bus_message(self, bus, message):
         t = message.type
         if t == Gst.MessageType.EOS:
@@ -79,6 +89,7 @@ class GstPipeline:
             Gtk.main_quit()
         return True
 
+   
     def on_new_sample(self, sink, preroll):
         sample = sink.emit('pull-preroll' if preroll else 'pull-sample')
         if not self.sink_size:
