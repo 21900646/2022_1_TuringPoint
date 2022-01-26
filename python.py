@@ -300,7 +300,7 @@ import time
 
 from common import avg_fps_counter, SVG
 from pycoral.utils.dataset import read_label_file
-from pycoral.utils.edgetpu import make_interpreter
+from pycoral.utils.edgetpu import make_interpreter #tflite를 사용하기 위한 유틸리티
 from pycoral.utils.edgetpu import run_inference
 from pycoral.adapters.common import input_size
 from pycoral.adapters.classify import get_classes
@@ -434,6 +434,8 @@ from pycoral.utils.edgetpu import make_interpreter
 from pycoral.utils.edgetpu import run_inference
 
 def generate_svg(src_size, inference_box, objs, labels, text_lines):
+    
+    
     svg = SVG(src_size)
     src_w, src_h = src_size
     box_x, box_y, box_w, box_h = inference_box
@@ -459,10 +461,14 @@ def generate_svg(src_size, inference_box, objs, labels, text_lines):
     return svg.finish()
 
 def main():
-    default_model_dir = '../all_models'
-    default_model = 'mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite'
-    default_labels = 'coco_labels.txt'
+    default_model_dir = '../all_models' # model dir 설정
+    default_model = 'mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite' # model 이름
+    default_labels = 'coco_labels.txt' # model label
+    
+    # 인자값을 받을 수 있는 인스턴스 생성
     parser = argparse.ArgumentParser()
+    
+    # 입력받을 인자값 설정
     parser.add_argument('--model', help='.tflite model path',
                         default=os.path.join(default_model_dir,default_model))
     parser.add_argument('--labels', help='label file path',
@@ -476,9 +482,12 @@ def main():
     parser.add_argument('--videofmt', help='Input video format.',
                         default='raw',
                         choices=['raw', 'h264', 'jpeg'])
+    
+    # args에 위의 내용들을 저장
     args = parser.parse_args()
 
     print('Loading {} with {} labels.'.format(args.model, args.labels))
+    
     interpreter = make_interpreter(args.model)
     interpreter.allocate_tensors()
     labels = read_label_file(args.labels)
@@ -487,6 +496,7 @@ def main():
     # Average fps over last 30 frames.
     fps_counter = avg_fps_counter(30)
 
+   
     def user_callback(input_tensor, src_size, inference_box):
       nonlocal fps_counter
       start_time = time.monotonic()
