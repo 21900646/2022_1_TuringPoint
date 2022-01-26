@@ -13,7 +13,7 @@ class GstPipeline:
     #init 함수는 대부분 이렇게 만듦
     def __init__(self, pipeline, user_function, src_size):
         self.user_function = user_function
-        self.running = False
+        self.running = False #아직 안돌렸다.
         self.gstsample = None
         self.sink_size = None
         self.src_size = src_size
@@ -44,9 +44,11 @@ class GstPipeline:
 
     def run(self):
         # Start inference worker.
-        self.running = True
-        worker = threading.Thread(target=self.inference_loop)
-        worker.start()
+        self.running = True  #돌렸다.
+        
+        #subthread를 만들어 함수를 돌림. http://pythonstudy.xyz/python/article/24-%EC%93%B0%EB%A0%88%EB%93%9C-Thread --> 여기 참고
+        worker = threading.Thread(target=self.inference_loop) #thread 객체 얻기 (파생클래스 작성하기) #target은 함수, 하지만 () 이거 쓰면 결과가 리턴되기 때문에 하면 안된다. 
+        worker.start() #subthread 돌리기
 
         # Run pipeline.
         self.pipeline.set_state(Gst.State.PLAYING)
